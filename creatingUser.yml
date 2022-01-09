@@ -1,0 +1,35 @@
+---
+- name: Creating users in Linux (Created by Edson Bittencourt in 2022)
+  hosts: all # Trocar se não for para refazer em todas as máquinas. Selecionar o grupo correspondente.
+  remote_user: root
+  tasks:
+    # name - Nome do usuario 
+    # groups - Adiciona o usuario aos grupos desejados
+    # shell - Define qual shell do usuario criado
+    # createhome: yes - Cria o homedir
+    # createhome: no - Nao cria o homedir
+    # ssh_key_file - Chave de acesso
+
+    # Modificando sudoers para wheel ser NOPASSWORD
+    - name: Allowing 'wheel' group to be passwordless
+      lineinfile:
+        dest: /etc/sudoers
+        state: present
+        regexp: '^%wheel'
+        line: '%wheel ALL=(ALL) NOPASSWD: ALL'
+        validate: 'visudo -cf %s'
+
+    # Criando o usuario bittenco
+    - name: Adding user bittenco with sudo privileges, adding it to wheel group
+      user:
+        name: edsaozao
+        groups: wheel
+        shell: /bin/bash
+        createhome: yes
+
+    # Deployando SSH Key
+    - name: Adding SSH Key for the edsaozao user
+      ansible.posix.authorized_key:
+        user: edsaozao
+        state: present
+        key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
